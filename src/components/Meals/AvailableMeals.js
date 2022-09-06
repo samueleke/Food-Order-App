@@ -6,31 +6,59 @@ import MealItem from './MealItem/MealItem';
 
 
 const AvailableMeals = () => {
-    const [meals, setMeals] = useState([])
+    const [meals, setMeals] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [httpError, setHttpError] = useState()
+
     useEffect(() => {
         const fetchMeals = async () => {
             const response = await fetch('https://react-http-5c15b-default-rtdb.europe-west1.firebasedatabase.app/meals.json')
             console.log(response);
+
+            if (!response.ok) {
+                throw new Error('Something went wrong!')
+            }
+
             const responseData = await response.json();
             console.table(responseData);
 
             const loadedMeals = [];
 
-            for(const key in  responseData) {
+            for (const key in responseData) {
                 loadedMeals.push({
-                   id: key,
-                   name: responseData[key].name,
-                   description: responseData[key].description,
-                   price: responseData[key].price,
+                    id: key,
+                    name: responseData[key].name,
+                    description: responseData[key].description,
+                    price: responseData[key].price,
                 })
             }
             setMeals(loadedMeals);
+            setIsLoading(false)
             console.table(loadedMeals);
         };
 
-        fetchMeals();
+
+        fetchMeals().catch(error => {
+            setIsLoading(false);
+            setHttpError(error.message);
+        });
     }, [])
 
+    if (isLoading) {
+        return (
+            <section className={classes.MealsLoading}>
+                <p>Loading...</p>
+            </section>
+        )
+    }
+
+    if (httpError) {
+        return (
+            <section className={classes.MealsError}>
+                <p>{httpError}</p>
+            </section>
+        )
+    }
     const mealsList = meals.map((meal) =>
         <MealItem
             id={meal.id}
